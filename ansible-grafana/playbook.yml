@@ -17,30 +17,12 @@
   - name: Install EPEL repository
     yum: "name={{ item }} state=installed"
     with_items:
-      - vim
       - epel-release
-
-  - name: Install Python PIP and Python Development
-    yum: "name={{ item }} state=installed"
-    with_items:
       - python-pip
       - python-devel
-
-  # Development tools
-  - name: Install Development tools
-    yum: name="@Development tools" state=installed
-
-  # Install httpd
-  - name: Install httpd
-    yum: "name={{ item }} state=installed"
-    with_items:
+      - "@Development tools"
       - httpd
       - mod_wsgi
-
-  # Install graphite
-  - name: Install graphite requirements
-    yum: "name={{ item }} state=installed"
-    with_items:
       - sqlite
       - pycairo
       - libfontenc
@@ -49,14 +31,11 @@
 
   # Install graphite to venv
   - name: Install Whisper from pip to venv
-    pip:
-      name: whisper
-  - name: Install Carbon from pip to venv
-    pip:
-      name: carbon
-  - name: Install Graphite-web from pip to venv
-    pip:
-      name: graphite-web
+    pip: "name={{ item }} state=installed"
+    with_items:
+      whisper
+      carbon
+      graphite-web
 
   # Create dir
   - name: Create apache log dir
