@@ -1,0 +1,205 @@
+---
+- hosts: grafana
+  become: true
+  become_user: root
+
+  tasks:
+
+  # Grafana repository
+  - name: Add Grafana repository
+    yum_repository:
+      name: grafana
+      description: grafana
+      baseurl: https://packagecloud.io/grafana/stable/el/6/$basearch
+      gpgcheck: 0
+
+  # Generic packages
+  - name: Install EPEL repository
+    yum: "name={{ item }} state=installed"
+    with_items:
+      - vim
+      - epel-release
+
+  - name: Install Python PIP and Python Development
+    yum: "name={{ item }} state=installed"
+    with_items:
+      - python-pip
+      - python-devel
+
+  # Development tools
+  - name: Install Development tools
+    yum: name="@Development tools" state=installed
+
+  # Install httpd
+  - name: Install httpd
+    yum: "name={{ item }} state=installed"
+    with_items:
+      - httpd
+      - mod_wsgi
+
+  # Install graphite
+  - name: Install graphite requirements
+    yum: "name={{ item }} state=installed"
+    with_items:
+      - sqlite
+      - pycairo
+      - libfontenc
+      - cairo-devel
+      - libffi-devel
+
+  # Install graphite to venv
+  - name: Install Whisper from pip to venv
+    pip:
+      name: whisper
+  - name: Install Carbon from pip to venv
+    pip:
+      name: carbon
+  - name: Install Graphite-web from pip to venv
+    pip:
+      name: graphite-web
+
+  # Create dir
+  - name: Create apache log dir
+    file:
+      path: /opt/graphite/storage/log/webapp/
+      state: directory
+
+  - name: Create graphite static dir
+    file:
+      path: /opt/graphite/static/
+      state: directory
+
+  # Copy files
+  - name: Copy bashrc
+    copy:
+      src: bashrc
+      dest: /home/vagrant/.bashrc
+      owner: vagrant
+      group: vagrant
+      mode: 0644
+
+  - name: Copy apache config
+    copy:
+      src: graphite.conf
+      dest: /etc/httpd/conf.d/graphite.conf
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Copy systemd service config
+    copy:
+      src: carbon.service
+      dest: /etc/systemd/system/carbon.service
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Copy carbon config
+    copy:
+      src: carbon.conf
+      dest: /opt/graphite/conf/carbon.conf
+      owner: apache
+      group: apache
+      mode: 0644
+
+  - name: Copy storage-schema config
+    copy:
+      src: storage-schemas.conf
+      dest: /opt/graphite/conf/storage-schemas.conf
+      owner: apache
+      group: apache
+      mode: 0644
+
+  - name: Copy graphite config files 1
+    copy:
+      src: local_settings.py
+      dest: /opt/graphite/webapp/graphite/local_settings.py
+      owner: apache
+      group: apache
+      mode: 0644
+
+  - name: Copy graphite config files 2
+    copy:
+      src: graphite.wsgi
+      dest: /opt/graphite/conf/graphite.wsgi
+      owner: apache
+      group: apache
+      mode: 0744
+
+  - name: Copy extras.sh script
+    copy:
+      src: extras.sh
+      dest: /home/vagrant/extras.sh
+      mode: 0700
+
+  # Disable SELINUX
+  - name: Disable SELINUX
+    selinux:
+      policy: targeted
+      state: permissive
+
+  # Run extras.sh
+  - name: Execute the command in remote shell
+    shell: /home/vagrant/extras.sh
+
+  # Set permissions
+  - name: Set /opt/graphite permissions
+    file:
+      dest: /opt/graphite
+      owner: apache
+      group: apache
+      recurse: true
+
+  # Start services
+  - name: Start httpd
+    service:
+      name: httpd
+      state: started
+      enabled: true
+
+  - name: Start carbon
+    service:
+      name: carbon
+      state: started
+      enabled: true
+
+  # Install Grafana
+  - name: Install Grafana
+    yum: "name={{ item }} state=installed"
+    with_items:
+      - grafana
+
+  - name: Grafana config
+    copy:
+      src: grafana.ini
+      dest: /etc/grafana/grafana.ini
+      owner: root
+      group: root
+      mode: 0644
+
+  # Start grafana
+  - name: Start Grafana
+    service:
+      name: grafana-server
+      state: started
+      enabled: true
+
+  # Pause for 1 minute
+  - pause:
+    minutes: 1
+
+  # Create datasource local graphite
+  - name: Create datasource
+    uri:
+      url: http://localhost:3000/api/datasources
+      method: POST
+      force_basic_auth: true
+      user: admin
+      password: admin
+      headers:
+        Accept: "application/json"
+        Content-Type: "application/json"
+      body_format: json
+      body: {"isDefault":true, "name":"local_graphite", "type":"graphite", "url":"http://localhost", "access":"proxy", "basicAuth":false, "jsonData":{"graphiteVersion":"1.0"}}
+
+...

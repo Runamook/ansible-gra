@@ -1,0 +1,12 @@
+[Unit]
+Description=Carbon Cache
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/python /opt/graphite/bin/carbon-cache.py start
+ExecStop=/usr/bin/python /opt/graphite/bin/carbon-cache.py stop
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
