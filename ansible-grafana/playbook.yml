@@ -13,11 +13,14 @@
       baseurl: https://packagecloud.io/grafana/stable/el/6/$basearch
       gpgcheck: 0
 
-  # Generic packages
+  # EPEL repository
   - name: Install EPEL repository
+    yum: "name=epel-release state=installed"
+
+  # Other packages
+  - name: Install YUM packages
     yum: "name={{ item }} state=installed"
     with_items:
-      - epel-release
       - python-pip
       - python-devel
       - "@Development tools"
@@ -29,8 +32,8 @@
       - cairo-devel
       - libffi-devel
 
-  # Install graphite to venv
-  - name: Install Whisper from pip to venv
+  # Install graphite
+  - name: Install whisper, carbon, graphite-web from pip
     pip: "name={{ item }} state=installed"
     with_items:
       whisper
