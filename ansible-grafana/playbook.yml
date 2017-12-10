@@ -34,7 +34,7 @@
 
   # Install graphite
   - name: Install whisper, carbon, graphite-web from pip
-    pip: "name={{ item }} state=installed"
+    pip: "name={{ item }} state=latest"
     with_items:
       whisper
       carbon
