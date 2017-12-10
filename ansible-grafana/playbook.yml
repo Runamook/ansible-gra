@@ -167,8 +167,9 @@
       enabled: true
 
   # Pause for 1 minute
-  - pause:
-    minutes: 1
+  - name: Pause for 1 minute
+    pause:
+      minutes: 1
 
   # Create datasource local graphite
   - name: Create datasource
