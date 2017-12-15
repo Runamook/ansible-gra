@@ -31,6 +31,12 @@
       - libfontenc
       - cairo-devel
       - libffi-devel
+      - bind-utils
+
+  # Set timezone
+  - name: set timezone to Europe/Moscow
+    timezone:
+      name: Europe/Moscow
 
   # Install graphite
   - name: Install whisper, carbon, graphite-web from pip
