@@ -5,6 +5,13 @@
 
   tasks:
 
+  # TMPFS
+  # - name: TMPFS
+  # mount:
+  #    path: /opt/graphite/storage/whisper
+  #    fstype: tmpfs
+  #    state: present
+
   # Grafana repository
   - name: Add Grafana repository
     yum_repository:
