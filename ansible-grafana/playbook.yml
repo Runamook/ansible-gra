@@ -45,6 +45,12 @@
     timezone:
       name: Europe/Moscow
 
+  # Install six
+  - name: Install six
+    pip: "name={{ item }} state=latest"
+    with_items:
+      six
+
   # Install graphite
   - name: Install whisper, carbon, graphite-web from pip
     pip: "name={{ item }} state=latest"
