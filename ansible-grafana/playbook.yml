@@ -45,6 +45,12 @@
     timezone:
       name: Europe/Moscow
 
+  # Install six
+  - name: Install six
+    pip: "name={{ item }} state=latest"
+    with_items:
+      six
+
   # Install graphite
   - name: Install whisper, carbon, graphite-web from pip
     pip: "name={{ item }} state=latest"
@@ -53,81 +59,26 @@
       carbon
       graphite-web
 
-  # Create dir
-  - name: Create apache log dir
+  - name: Create dirs
     file:
-      path: /opt/graphite/storage/log/webapp/
+      path: "{{ item }}"
       state: directory
+      with_items:
+        - /opt/graphite/storage/log/webapp/
+        - /opt/graphite/static/
 
-  - name: Create graphite static dir
-    file:
-      path: /opt/graphite/static/
-      state: directory
+  - name: Copy files
+    template: "src={{ item.src }} dest={{ item.dest }} owner={{ item.owner }} group={{ item.group }} mode={{ item.mode }}"
+    with_items:
+      - { src: 'bashrc', dest: '/home/vagrant/.bashrc', owner: 'vagrant', group: 'vagrant', mode: '0644'}
+      - { src: 'graphite.conf', dest: '/etc/httpd/conf.d/graphite.conf', owner: 'root', group: 'root', mode: '0644'}
+      - { src: 'carbon.service', dest: '/etc/systemd/system/carbon.service', owner: 'root', group: 'root', mode: '0644'}
+      - { src: 'carbon.conf', dest: '/opt/graphite/conf/carbon.conf', owner: 'apache', group: 'apache', mode: '0644'}
+      - { src: 'storage-schemas.conf', dest: '/opt/graphite/conf/storage-schemas.conf', owner: 'apache', group: 'apache', mode: '0644'}
+      - { src: 'local_settings.py', dest: '/opt/graphite/webapp/graphite/local_settings.py', owner: 'apache', group: 'apache', mode: '0644'}
+      - { src: 'graphite.wsgi', dest: '/opt/graphite/conf/graphite.wsgi', owner: 'apache', group: 'apache', mode: '0744'}
+      - { src: 'extras.sh', dest: '/home/vagrant/extras.sh', owner: 'apache', group: 'apache', mode: '0700'}
 
-  # Copy files
-  - name: Copy bashrc
-    copy:
-      src: bashrc
-      dest: /home/vagrant/.bashrc
-      owner: vagrant
-      group: vagrant
-      mode: 0644
-
-  - name: Copy apache config
-    copy:
-      src: graphite.conf
-      dest: /etc/httpd/conf.d/graphite.conf
-      owner: root
-      group: root
-      mode: 0644
-
-  - name: Copy systemd service config
-    copy:
-      src: carbon.service
-      dest: /etc/systemd/system/carbon.service
-      owner: root
-      group: root
-      mode: 0644
-
-  - name: Copy carbon config
-    copy:
-      src: carbon.conf
-      dest: /opt/graphite/conf/carbon.conf
-      owner: apache
-      group: apache
-      mode: 0644
-
-  - name: Copy storage-schema config
-    copy:
-      src: storage-schemas.conf
-      dest: /opt/graphite/conf/storage-schemas.conf
-      owner: apache
-      group: apache
-      mode: 0644
-
-  - name: Copy graphite config files 1
-    copy:
-      src: local_settings.py
-      dest: /opt/graphite/webapp/graphite/local_settings.py
-      owner: apache
-      group: apache
-      mode: 0644
-
-  - name: Copy graphite config files 2
-    copy:
-      src: graphite.wsgi
-      dest: /opt/graphite/conf/graphite.wsgi
-      owner: apache
-      group: apache
-      mode: 0744
-
-  - name: Copy extras.sh script
-    copy:
-      src: extras.sh
-      dest: /home/vagrant/extras.sh
-      mode: 0700
-
-  # Disable SELINUX
   - name: Disable SELINUX
     selinux:
       policy: targeted
@@ -137,7 +88,6 @@
   - name: Execute the command in remote shell
     shell: /home/vagrant/extras.sh
 
-  # Set permissions
   - name: Set /opt/graphite permissions
     file:
       dest: /opt/graphite
@@ -145,20 +95,6 @@
       group: apache
       recurse: true
 
-  # Start services
-  - name: Start httpd
-    service:
-      name: httpd
-      state: started
-      enabled: true
-
-  - name: Start carbon
-    service:
-      name: carbon
-      state: started
-      enabled: true
-
-  # Install Grafana
   - name: Install Grafana
     yum: "name={{ item }} state=installed"
     with_items:
@@ -172,19 +108,17 @@
       group: root
       mode: 0644
 
-  # Start grafana
-  - name: Start Grafana
-    service:
-      name: grafana-server
-      state: started
-      enabled: true
+  - name: Start httpd
+    service: "name={{ item }} state=started enabled=true"
+    with_items:
+      - httpd
+      - carbon
+      - grafana-server
 
-  # Pause for 1 minute
   - name: Pause for 1 minute
     pause:
       minutes: 1
 
-  # Create datasource local graphite
   - name: Create datasource
     uri:
       url: http://localhost:3000/api/datasources
