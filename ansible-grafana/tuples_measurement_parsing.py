@@ -71,7 +71,7 @@ def parse_kpi(original_header, line, group_name, epoch_time, tuples):
 	for i in range(len(line)):
                 # Check every element in line. If there is some meaningful value - create carbon record
 		if line[i] != '' and line[i] != 'n/a' and line[i] != '0':
-			# VIS_AMS_SO_NE.Measurement.SOR_FE8_CONN_2.TmFsmOpStateUnavailable n/a 1512768000
+			# LAB_SO_NE.Measurement.FE8_CONN_2.TmFsmOpStateUnavailable n/a 1512768000
 			key = prefix + '.' + header[i]
                         value = line[i]
                         tuples.append((key, (epoch_time,value)))
