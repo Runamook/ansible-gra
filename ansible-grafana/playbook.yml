@@ -5,14 +5,6 @@
 
   tasks:
 
-  # TMPFS
-  # - name: TMPFS
-  # mount:
-  #    path: /opt/graphite/storage/whisper
-  #    fstype: tmpfs
-  #    state: present
-
-  # Grafana repository
   - name: Add Grafana repository
     yum_repository:
       name: grafana
@@ -20,11 +12,9 @@
       baseurl: https://packagecloud.io/grafana/stable/el/6/$basearch
       gpgcheck: 0
 
-  # EPEL repository
   - name: Install EPEL repository
     yum: "name=epel-release state=installed"
 
-  # Other packages
   - name: Install YUM packages
     yum: "name={{ item }} state=installed"
     with_items:
@@ -40,18 +30,15 @@
       - libffi-devel
       - bind-utils
 
-  # Set timezone
-  - name: set timezone to Europe/Moscow
+  - name: set timezone
     timezone:
       name: Europe/Moscow
 
-  # Install six
   - name: Install six
     pip: "name={{ item }} state=latest"
     with_items:
       six
 
-  # Install graphite
   - name: Install whisper, carbon, graphite-web from pip
     pip: "name={{ item }} state=latest"
     with_items:
@@ -82,7 +69,6 @@
       policy: targeted
       state: permissive
 
-  # Run extras.sh
   - name: Execute the command in remote shell
     shell: /home/vagrant/extras.sh
 
